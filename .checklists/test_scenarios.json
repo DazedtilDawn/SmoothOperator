@@ -1,0 +1,101 @@
+{
+    "checklist": {
+        "name": "System Test Scenarios",
+        "phases": [
+            {
+                "name": "Basic Operations",
+                "success_gate": {
+                    "metric": "integration_test_coverage",
+                    "min_value": 90
+                },
+                "tasks": [
+                    {
+                        "description": "Simple echo command test",
+                        "command": "echo 'Hello, testing!'",
+                        "validation": {
+                            "script": "validate_orchestrator.py",
+                            "artifacts": [
+                                "orchestrator_tests.log"
+                            ]
+                        }
+                    },
+                    {
+                        "description": "Test with expected failure",
+                        "command": "exit 1",
+                        "validation": {
+                            "script": "validate_orchestrator.py",
+                            "artifacts": [
+                                "orchestrator_tests.log"
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "Blocker Resolution",
+                "success_gate": {
+                    "metric": "validation_coverage",
+                    "min_value": 85
+                },
+                "tasks": [
+                    {
+                        "description": "Test resolvable blocker",
+                        "command": "echo 'Testing resolvable blocker'",
+                        "blockers": [
+                            {
+                                "type": "DependencyCheck",
+                                "resolution": {
+                                    "diagnostics": "python check_dependencies.py"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Test unresolvable blocker",
+                        "command": "echo 'Testing unresolvable blocker'",
+                        "blockers": [
+                            {
+                                "type": "ExpertRequired",
+                                "resolution": {
+                                    "required_experts": [
+                                        "Senior Python Developer"
+                                    ],
+                                    "diagnostics": "exit 1"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "API Integration",
+                "success_gate": {
+                    "metric": "api_test_coverage",
+                    "min_value": 95
+                },
+                "tasks": [
+                    {
+                        "description": "Test LMStudio connection",
+                        "command": "python test_lmstudio_connection.py",
+                        "validation": {
+                            "script": "validate_lmstudio_integration.py",
+                            "artifacts": [
+                                "lmstudio_tests.log"
+                            ]
+                        }
+                    },
+                    {
+                        "description": "Test validation system",
+                        "command": "python -c \"from validation_system.core import TransitionValidator; v = TransitionValidator(); print('Validator initialized')\"",
+                        "validation": {
+                            "script": "validate_transition_validator.py",
+                            "artifacts": [
+                                "validator_tests.log"
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,67 @@
+{
+    "checklist": {
+        "name": "Smooth Operator System Implementation",
+        "phases": [
+            {
+                "name": "Core System Setup",
+                "success_gate": {
+                    "metric": "integration_test_coverage",
+                    "min_value": 95
+                },
+                "tasks": [
+                    {
+                        "description": "Implement base Orchestrator class with retry mechanism",
+                        "command": "echo 'Validating Orchestrator implementation...'",
+                        "validation": {
+                            "script": "validate_orchestrator.py",
+                            "artifacts": [
+                                "orchestrator_tests.log"
+                            ]
+                        },
+                        "implementation_data": "def __init__(self, checklist_dir: str = \".checklists\", patches_dir: str = \".patches\"):\n    self.checklist_dir = Path(checklist_dir)\n    self.patches_dir = Path(patches_dir)\n    self.patches_dir.mkdir(exist_ok=True)\n    self.current_checklist = None\n    self.status = {}\n    self.results = {}\n    self.validator = TransitionValidator(\"transition_artifacts\")\n    self.file_ops = FileOperations()\n    self.lmstudio_client = LMStudioClient()"
+                    }
+                ]
+            },
+            {
+                "name": "AI Integration",
+                "success_gate": {
+                    "metric": "api_test_coverage",
+                    "min_value": 90
+                },
+                "tasks": [
+                    {
+                        "description": "Implement LMStudio AI client for prompt generation",
+                        "command": "python -c \"import shutil; shutil.copy('.checklists/implementations/lmstudio_client.py', 'external_ai_integration.py')\"",
+                        "validation": {
+                            "script": "validate_lmstudio_integration.py",
+                            "artifacts": [
+                                "lmstudio_tests.log"
+                            ]
+                        },
+                        "implementation_data": "class LMStudioClient:\n    def __init__(self, api_endpoint: str = \"http://localhost:1234/v1/chat/completions\"):\n        self.api_endpoint = api_endpoint\n\n    def generate_prompt(self, context: Dict[str, Any]) -> str:\n        headers = {\n            \"Content-Type\": \"application/json\"\n        }\n\n        messages = [\n            {\n                \"role\": \"system\",\n                \"content\": \"You are a helpful AI assistant that helps with coding tasks.\"\n            },\n            {\n                \"role\": \"user\",\n                \"content\": f\"\"\"\n                Phase: {context.get('phase', '')}\n                Task: {context.get('task_description', '')}\n                Error: {context.get('error_message', '')}\n                Implementation Data: {context.get('implementation_data', '')}\n\n                Please help me fix this issue and provide guidance on how to proceed.\n                \"\"\"\n            }\n        ]\n\n        payload = {\n            \"model\": \"local-model\",\n            \"messages\": messages,\n            \"temperature\": 0.7,\n            \"max_tokens\": 2000,\n            \"timeout\": 60\n        }\n\n        try:\n            response = requests.post(\n                self.api_endpoint,\n                headers=headers,\n                json=payload,\n                timeout=60\n            )\n            response.raise_for_status()\n            data = response.json()\n            return data.get(\"choices\", [{}])[0].get(\"message\", {}).get(\"content\", \"\")\n        except requests.exceptions.RequestException as e:\n            return f\"Error generating prompt: {e}\""
+                    }
+                ]
+            },
+            {
+                "name": "Validation System",
+                "success_gate": {
+                    "metric": "validation_coverage",
+                    "min_value": 95
+                },
+                "tasks": [
+                    {
+                        "description": "Implement TransitionValidator for task validation",
+                        "command": "python -c \"import shutil; shutil.copy('.checklists/implementations/transition_validator.py', 'validation_system/core.py')\"",
+                        "validation": {
+                            "script": "validate_transition_validator.py",
+                            "artifacts": [
+                                "validator_tests.log"
+                            ]
+                        },
+                        "implementation_data": "class TransitionValidator:\n    def __init__(self, artifacts_dir: str = \"transition_artifacts\"):\n        self.artifacts_dir = Path(artifacts_dir)\n        self.artifacts_dir.mkdir(exist_ok=True)\n\n    def validate_task(self, task: Dict[str, Any], phase_name: str) -> ValidationResult:\n        try:\n            if \"validation\" not in task:\n                return ValidationResult(ValidationStatus.SUCCESS, {})\n\n            validation = task[\"validation\"]\n            script = validation[\"script\"]\n            expected_artifacts = validation.get(\"artifacts\", [])\n\n            result = subprocess.run(\n                [\"python\", script],\n                capture_output=True,\n                text=True\n            )\n\n            if result.returncode != 0:\n                return ValidationResult(\n                    ValidationStatus.FAILURE,\n                    {},\n                    f\"Validation script failed: {result.stderr}\"\n                )\n\n            try:\n                output = json.loads(result.stdout)\n                status = output.get(\"status\", \"failure\")\n                artifacts = {}\n\n                for artifact in expected_artifacts:\n                    artifact_path = self.artifacts_dir / artifact\n                    if artifact_path.exists():\n                        with open(artifact_path, 'r') as f:\n                            artifacts[artifact] = f.read()\n                    else:\n                        return ValidationResult(\n                            ValidationStatus.FAILURE,\n                            artifacts,\n                            f\"Missing artifact: {artifact}\"\n                        )\n\n                if status == \"success\":\n                    return ValidationResult(ValidationStatus.SUCCESS, artifacts)\n                else:\n                    return ValidationResult(\n                        ValidationStatus.FAILURE,\n                        artifacts,\n                        output.get(\"error_message\", \"Validation failed\")\n                    )\n\n            except json.JSONDecodeError:\n                return ValidationResult(\n                    ValidationStatus.FAILURE,\n                    {},\n                    \"Invalid validation script output format\"\n                )\n\n        except Exception as e:\n            return ValidationResult(\n                ValidationStatus.FAILURE,\n                {},\n                f\"Validation error: {str(e)}\"\n            )"
+                    }
+                ]
+            }
+        ]
+    }
+}

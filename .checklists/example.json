@@ -1,0 +1,75 @@
+{
+    "checklist": {
+        "name": "Example AI-Driven Code Update Process",
+        "chatgpt_instructions": "This checklist demonstrates the AI-driven code update process with patch management and snippet insertion.",
+        "phases": [
+            {
+                "name": "Environment Setup",
+                "success_gate": {
+                    "metric": "integration_test_coverage",
+                    "min_value": 95
+                },
+                "tasks": [
+                    {
+                        "description": "Update JSON schema with ChatGPT instructions field",
+                        "command": "cursor apply-patch json_schema_update.patch",
+                        "validation": {
+                            "script": "validate_json_schema.py",
+                            "artifacts": [
+                                "schema_validation_report.json"
+                            ]
+                        },
+                        "implementation_data": "diff --git a/schema.json b/schema.json\n--- a/schema.json\n+++ b/schema.json\n@@ -1,6 +1,9 @@\n {\n   \"checklist\": {\n     \"name\": \"Example AI-Driven Code Update Process\",\n+    \"chatgpt_instructions\": \"This checklist demonstrates the AI-driven code update process.\",\n     \"phases\": [\n       {"
+                    },
+                    {
+                        "description": "Configure LMStudio AI integration",
+                        "command": "cursor insert-snippet --file external_ai_integration.py --snippet 'implementation_data' --line 1",
+                        "validation": {
+                            "script": "validate_lmstudio_integration.py",
+                            "artifacts": [
+                                "integration_test_results.xml"
+                            ]
+                        },
+                        "implementation_data": "import requests\nimport json\n\nclass LMStudioClient:\n    def __init__(self, api_key: str, api_endpoint: str = 'http://localhost:5000/generate_prompt'):\n        self.api_key = api_key\n        self.api_endpoint = api_endpoint\n\n    def generate_prompt(self, context: dict) -> str:\n        headers = {\n            'Authorization': f'Bearer {self.api_key}',\n            'Content-Type': 'application/json'\n        }\n        try:\n            response = requests.post(self.api_endpoint, headers=headers, json={'context': context})\n            response.raise_for_status()\n            return response.json().get('prompt', '')\n        except Exception as e:\n            return f'Error generating prompt: {str(e)}'"
+                    }
+                ]
+            },
+            {
+                "name": "Code Updates",
+                "success_gate": {
+                    "metric": "code_coverage",
+                    "min_value": 90
+                },
+                "tasks": [
+                    {
+                        "description": "Update error handling in orchestrator",
+                        "command": "cursor insert-snippet --file orchestrator.py --snippet 'implementation_data' --line 150",
+                        "validation": {
+                            "script": "validate_orchestrator.py",
+                            "artifacts": [
+                                "orchestrator_validation.log"
+                            ]
+                        },
+                        "implementation_data": "def handle_failure(self, phase_name: str, task: Dict[str, Any], result: TaskResult):\n    context = {\n        'phase': phase_name,\n        'task_description': task['description'],\n        'error_message': result.error_message,\n        'chatgpt_instructions': self.chatgpt_instructions,\n        'implementation_data': task.get('implementation_data', '')\n    }\n    new_prompt = self.lmstudio_client.generate_prompt(context)\n    return self.cursor_client.receive_prompt(new_prompt)"
+                    }
+                ]
+            },
+            {
+                "name": "Documentation",
+                "tasks": [
+                    {
+                        "description": "Update technical documentation",
+                        "command": "cursor insert-snippet --file docs/TECHNICAL.md --snippet 'implementation_data' --line 50",
+                        "validation": {
+                            "script": "validate_docs.py",
+                            "artifacts": [
+                                "docs_validation.json"
+                            ]
+                        },
+                        "implementation_data": "## AI Integration\n\n### LMStudio AI Integration\nThe system now integrates with LMStudio AI for intelligent error remediation:\n1. Error Detection: System identifies task failures\n2. Context Gathering: Relevant data is collected\n3. Prompt Generation: LMStudio AI generates specific fix instructions\n4. Automated Remediation: Cursor AI applies the fixes\n\n### Configuration\nEnsure the following environment variables are set:\n- `LMSTUDIO_API_KEY`: Your LMStudio AI API key\n- `LMSTUDIO_ENDPOINT`: API endpoint (default: http://localhost:5000)"
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,0 +1,8 @@
+.checklists
+directory_tree.txt
+README.md
+requirements.txt
+tests
+transition_artifacts
+validate_structure.py
+validation_system

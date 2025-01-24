@@ -1,0 +1,12 @@
+diff --git a/schema.json b/schema.json
+--- a/schema.json
++++ b/schema.json
+@@ -1,6 +1,9 @@
+ {
+   "checklist": {
+     "name": "Example AI-Driven Code Update Process",
++    "chatgpt_instructions": "This checklist demonstrates the AI-driven code update process.",
+     "phases": [
+       {
+         "name": "Environment Setup",
+``` 

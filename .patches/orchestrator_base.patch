@@ -1,0 +1,89 @@
+import os
+import json
+import time
+import sys
+from pathlib import Path
+from typing import Optional, Dict, List, Any
+from cursor_client import CursorAIClient, CursorResult, FileOperations, OperationResult
+from enum import Enum
+from dataclasses import dataclass
+import yaml
+from datetime import datetime
+import subprocess
+
+from external_ai_integration import LMStudioClient
+from validation_system.core import TransitionValidator, ValidationStatus
+from validation_system.blockers.auto_blocker_resolver import BlockerResolver
+
+class TaskResult:
+    pass
+
+class FileOperations:
+    def __init__(self):
+        pass
+
+    def read_json(self, file_path: Path) -> Dict[str, Any]:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def write_json(self, file_path: Path, data: Dict[str, Any]) -> None:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4)
+
+class Orchestrator:
+    def __init__(self, checklist_dir: str = ".checklists", patches_dir: str = ".patches"):
+        self.checklist_dir = Path(checklist_dir)
+        self.patches_dir = Path(patches_dir)
+        self.patches_dir.mkdir(exist_ok=True)
+        self.max_retries = 3
+        self.current_checklist = None
+        self.status = {}
+        self.results = {}
+        self.validator = TransitionValidator("transition_artifacts")
+        self.file_ops = FileOperations()
+        self.lmstudio_client = LMStudioClient()
+        self.blocker_resolver = BlockerResolver()
+
+    def load_checklist(self, checklist_name: str) -> None:
+        checklist_path = self.checklist_dir / f"{checklist_name}.json"
+        if not checklist_path.exists():
+            raise FileNotFoundError(f"Checklist {checklist_name} not found")
+
+        data = self.file_ops.read_json(checklist_path)
+        if "checklist" not in data:
+            raise ValueError("Invalid checklist format: missing 'checklist' key")
+        
+        checklist = data["checklist"]
+        if "phases" not in checklist:
+            raise ValueError("Invalid checklist format: missing 'phases' key")
+        
+        self.current_checklist = data
+        self.status = {
+            phase["name"]: {
+                "status": "not_started",
+                "tasks": {
+                    task["description"]: "not_started"
+                    for task in phase["tasks"]
+                }
+            }
+            for phase in checklist["phases"]
+        }
+        self.results = {}
+
+    def retry_task(self, phase_name: str, task: Dict[str, Any], max_retries: int = None) -> Optional[TaskResult]:
+        """Retry a failed task with exponential backoff."""
+        if max_retries is None:
+            max_retries = self.max_retries
+
+        for attempt in range(max_retries):
+            backoff = 2 ** attempt  # Exponential backoff
+            print(f"⏳ Retrying task '{task['description']}' (attempt {attempt + 1}/{max_retries}) after {backoff}s delay...")
+            time.sleep(backoff)
+            
+            result = self.execute_task(phase_name, task['description'])
+            if result.success:
+                print(f"✅ Retry successful on attempt {attempt + 1}")
+                return result
+        
+        print(f"❌ Task '{task['description']}' failed after {max_retries} retries")
+        return None 

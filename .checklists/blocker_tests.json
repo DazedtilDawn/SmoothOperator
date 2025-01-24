@@ -1,0 +1,151 @@
+{
+    "checklist": {
+        "name": "Blocker Resolution Test Scenarios",
+        "phases": [
+            {
+                "name": "Dependency Blockers",
+                "tasks": [
+                    {
+                        "description": "Test dependency check blocker",
+                        "command": "echo 'Testing dependency check'",
+                        "blockers": [
+                            {
+                                "type": "DependencyCheck",
+                                "resolution": {
+                                    "diagnostics": "python check_dependencies.py"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Test environment check blocker",
+                        "command": "echo 'Testing environment check'",
+                        "blockers": [
+                            {
+                                "type": "EnvironmentCheck",
+                                "resolution": {
+                                    "diagnostics": "python check_test_environment.py"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Expert Required Blockers",
+                "tasks": [
+                    {
+                        "description": "Test expert requirement",
+                        "command": "echo 'Testing expert requirement'",
+                        "blockers": [
+                            {
+                                "type": "ExpertRequired",
+                                "resolution": {
+                                    "required_experts": [
+                                        "Python Developer"
+                                    ],
+                                    "diagnostics": "exit 1"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Test multiple experts",
+                        "command": "echo 'Testing multiple experts'",
+                        "blockers": [
+                            {
+                                "type": "ExpertRequired",
+                                "resolution": {
+                                    "required_experts": [
+                                        "Python Developer",
+                                        "AI Integration Specialist"
+                                    ],
+                                    "diagnostics": "exit 1"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "API Blockers",
+                "tasks": [
+                    {
+                        "description": "Test LMStudio API blocker",
+                        "command": "echo 'Testing LMStudio API'",
+                        "blockers": [
+                            {
+                                "type": "APIConfiguration",
+                                "resolution": {
+                                    "diagnostics": "python test_lmstudio_connection.py"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Test multiple API blockers",
+                        "command": "echo 'Testing multiple APIs'",
+                        "blockers": [
+                            {
+                                "type": "APIConfiguration",
+                                "resolution": {
+                                    "diagnostics": "python test_lmstudio_connection.py"
+                                }
+                            },
+                            {
+                                "type": "APIConfiguration",
+                                "resolution": {
+                                    "diagnostics": "python validate_lmstudio_integration.py"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "Mixed Blockers",
+                "tasks": [
+                    {
+                        "description": "Test mixed blockers - all resolvable",
+                        "command": "echo 'Testing mixed resolvable blockers'",
+                        "blockers": [
+                            {
+                                "type": "DependencyCheck",
+                                "resolution": {
+                                    "diagnostics": "python check_dependencies.py"
+                                }
+                            },
+                            {
+                                "type": "APIConfiguration",
+                                "resolution": {
+                                    "diagnostics": "python test_lmstudio_connection.py"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "description": "Test mixed blockers - some unresolvable",
+                        "command": "echo 'Testing mixed unresolvable blockers'",
+                        "blockers": [
+                            {
+                                "type": "DependencyCheck",
+                                "resolution": {
+                                    "diagnostics": "python check_dependencies.py"
+                                }
+                            },
+                            {
+                                "type": "ExpertRequired",
+                                "resolution": {
+                                    "required_experts": [
+                                        "Senior Python Developer"
+                                    ],
+                                    "diagnostics": "exit 1"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
